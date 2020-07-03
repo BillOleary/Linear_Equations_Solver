@@ -1,0 +1,28 @@
+# Project exclude paths
+/.gradle/
+/Problems/Cinema/out/
+/Problems/Cinema/out/production/classes/
+/Problems/Creating instances/out/
+/Problems/Creating instances/out/production/classes/
+/Problems/End sequence/out/
+/Problems/End sequence/out/production/classes/
+/Problems/Fill the matrix by numbers/out/
+/Problems/Fill the matrix by numbers/out/production/classes/
+/Problems/Getting input/out/
+/Problems/Getting input/out/production/classes/
+/Problems/Maximum element in a matrix/out/
+/Problems/Maximum element in a matrix/out/production/classes/
+/Problems/Rotate a rectange array/out/
+/Problems/Rotate a rectange array/out/production/classes/
+/Problems/Spiral/out/
+/Problems/Spiral/out/production/classes/
+/Problems/Start sequence of words/out/
+/Problems/Start sequence of words/out/production/classes/
+/Problems/Sum of neighbors/out/
+/Problems/Sum of neighbors/out/production/classes/
+/Problems/Swap the columns/out/
+/Problems/Swap the columns/out/production/classes/
+/Problems/Symmetric matrix/out/
+/Problems/Symmetric matrix/out/production/classes/
+/Problems/The star figure/out/
+/Problems/The star figure/out/production/classes/
