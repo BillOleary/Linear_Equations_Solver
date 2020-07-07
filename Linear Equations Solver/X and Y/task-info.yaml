@@ -98,4 +98,8 @@ files:
   learner_created: true
 feedback_link: https://hyperskill.org/projects/40/stages/210/implement
 status: Solved
+feedback:
+  message: Congratulations! Continue on <a href="https://hyperskill.org/projects/40/stages/210/implement">JetBrains
+    Academy</a>
+  time: Fri, 03 Jul 2020 11:53:42 UTC
 record: 2

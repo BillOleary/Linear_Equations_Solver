@@ -11,6 +11,7 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/Linear Equations Solver/task" />
             <option value="$PROJECT_DIR$/Problems/Cinema" />
             <option value="$PROJECT_DIR$/Problems/Creating instances" />
             <option value="$PROJECT_DIR$/Problems/End sequence" />
