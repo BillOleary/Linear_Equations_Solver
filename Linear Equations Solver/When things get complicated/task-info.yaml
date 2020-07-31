@@ -482,6 +482,46 @@ files:
         }
     }
   learner_created: false
+- name: src/solver/in.txt
+  visible: true
+  learner_created: true
+- name: src/solver/out.txt
+  visible: true
+  learner_created: true
+- name: src/solver/MatrixConverter.java
+  visible: true
+  learner_created: true
+- name: src/solver/IO/DataOutputWriter.java
+  visible: true
+  learner_created: true
+- name: src/solver/Solver.java
+  visible: true
+  learner_created: true
+- name: src/solver/Main.java
+  visible: true
+  learner_created: true
+- name: src/solver/IO/DataInputReader.java
+  visible: true
+  learner_created: true
+- name: src/solver/EquationSolver/Matrix.java
+  visible: true
+  learner_created: true
+- name: src/solver/EquationSolver/LinearEquation.java
+  visible: true
+  learner_created: true
+- name: src/solver/EquationSolver/MultiVariableSolver.java
+  visible: true
+  learner_created: true
+- name: out.txt
+  visible: true
+  learner_created: true
+- name: output.txt
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/40/stages/212/implement
-status: Unchecked
-record: -1
+status: Solved
+feedback:
+  message: Congratulations! Continue on <a href="https://hyperskill.org/projects/40/stages/212/implement">JetBrains
+    Academy</a>
+  time: Fri, 31 Jul 2020 09:01:10 UTC
+record: 3

@@ -653,6 +653,477 @@ files:
         }
     }
   learner_created: false
+- name: output.txt
+  visible: true
+  text: |
+    1.0
+    1.0
+  learner_created: true
+- name: src/solver/in.txt
+  visible: true
+  text: |-
+    3 4
+    0 1 2 9
+    0 1 3 1
+    1 0 6 0
+    2 0 2 0
+  learner_created: true
+- name: out.txt
+  visible: true
+  text: No solutions
+  learner_created: true
+- name: src/solver/out.txt
+  visible: true
+  text: No solutions
+  learner_created: true
+- name: src/solver/EquationSolver/MultiVariableSolver.java
+  visible: true
+  text: |
+    package solver.EquationSolver;
+
+    import solver.Solver;
+
+    import java.util.ArrayList;
+
+    /*
+    * 06 July 2020
+    * Provide a solution to a multi-variate linear equation.
+    * Input to the class is a row/col array of numbers from which a solution is to be formed
+    * The class implements a Solver Interface with the premise that a solver could be a
+    * solution finder for different type of multivariate linear equations.
+     */
+    public class MultiVariableSolver implements Solver {
+
+        //Instance Variables to be updated from external source
+        private double[][] matrixValues;
+        private int numberOfVariables;
+        private int numberOfEquations;
+
+        //Internal Use Instance Variables
+        private ArrayList<Integer> numberOfSuperfluousEquations = new ArrayList<>();
+        private ArrayList<String> sequenceOfColumnSwaps = new ArrayList<>();
+        private StringBuilder step = new StringBuilder();
+        private static final String DIGIT_MATCH = "\\W?\\d+\\.0(\\d+)?";
+        private int numberOfSignificantEquations;
+        boolean hasALinearContradiction = false;
+
+
+        public MultiVariableSolver(double[][] matrixValues, int numberOfVariables, int numberOfEquations) {
+            this.matrixValues = matrixValues;
+            this.numberOfVariables = numberOfVariables;
+            this.numberOfEquations = numberOfEquations;
+            this.numberOfSignificantEquations = numberOfEquations;
+
+        }
+
+        @Override
+        public String solution(double[][] values) {
+            double[][] matrixValues;
+            int row;
+            int rowIndex;
+            int rowEndPoint;
+            int columnIndex;
+            int rowSize = values.length;
+            int columnSize = values[0].length;
+
+
+            System.out.println("Start solving the equation.");
+
+            //If any rows have a 1 in the first row first col promote that to row 1
+            matrixValues = checkForUnity(values , 0);
+
+            int calculationSpan = 2 * columnSize - 1;   //this is twice the length of the matrix
+            for (int col = 0; col < calculationSpan; col++) {
+                if (rowOfZeros(matrixValues)) {
+                    if (hasALinearContradiction) {
+                        System.out.println("No solutions");
+                        return "No solutions";
+                    }
+    //                else {
+    //                    if (numberOfSignificantEquations < numberOfVariables) {
+    //                        System.out.println("Infinitely many solutions");
+    //                        return "Infinitely many solutions";
+    //                    }
+    //                }
+                }
+
+
+                //ColumnIndex is used to fold the matrix over when the end of the column is reached
+                columnIndex = col >= columnSize ? calculationSpan - col  : col;
+
+                //Test if the current column exists for the current row
+                //Try a row swap to see if we can get a form which is conducive to solving
+                //the equation.
+                if (columnIndex < rowSize && matrixValues[columnIndex][columnIndex] == 0) {
+                    rowSwap(values, columnIndex);
+                }
+
+                //pre-calculate the start and end points for the loop
+                row = col >= rowSize ? 0 : columnIndex;
+
+                for ( ; row < rowSize; row++) {
+                    rowIndex = row >= rowSize || col >= rowSize ? (rowSize - row - 1) % rowSize : row;
+                    System.out.println("\t - Row Index Value " + rowIndex);
+                    if (rowIndex == columnIndex && matrixValues[rowIndex][rowIndex] != 0 && matrixValues[rowIndex][rowIndex] != 1) {
+                        makeUnity(matrixValues, rowIndex);
+                    } else
+                    if (rowIndex != columnIndex && columnIndex < rowSize && matrixValues[rowIndex][columnIndex] != 0) {
+                        rowReduce(matrixValues, rowIndex, columnIndex);
+                    }
+                }
+            }
+            //System.out.println(step.toString());
+            String solution = "";
+            double[] results = Matrix.transpose(matrixValues)[columnSize - 1];
+            if (numberOfSignificantEquations < numberOfVariables) {
+                System.out.println("Infinitely many solutions");
+                solution = "Infinitely many solutions";
+            } else {
+                for (int index = 0; index < (numberOfSignificantEquations < numberOfVariables ? numberOfEquations : numberOfVariables); index++) {
+                    solution += results[index] + " ";
+                }
+            }
+            return solution;
+        }
+
+        /*
+        * Test if any row is all 0's.  This will let you know if we have an Linear System
+        * with any solutions or not.
+        * A Linear Contradiction is a case where the left hand side is all 0's and the RHS
+        * is a none zero number.
+         */
+        private boolean rowOfZeros(double[][] values) {
+            boolean rowIsAllZero = true;
+            for (int rowCount = 0; rowCount < values.length; rowCount++) {
+                rowIsAllZero = true;
+                //if a row has already been tested and is in the List, do Not test it again
+                if (numberOfSuperfluousEquations.contains(rowCount)) {
+                    continue;
+                }
+                for (int colCount = 0; colCount < values[0].length - 1;  colCount++) {
+                    rowIsAllZero =  rowIsAllZero &&
+                                    values[rowCount][colCount] == 0;
+                }
+                if (rowIsAllZero) {
+                    if (!numberOfSuperfluousEquations.contains(rowCount) && matrixValues[rowCount][values[0].length - 1] == 0) {
+                        numberOfSuperfluousEquations.add(rowCount);
+                        numberOfSignificantEquations--;
+                    }
+                    else {
+                        hasALinearContradiction = true;
+                    }
+                }
+            }
+            return rowIsAllZero;
+        }
+
+        /*
+        * The method
+         */
+        private boolean rowSwap(double[][] values, int currentRowToSwap) {
+            boolean rowSwapSuccess = false;
+            for (int index = currentRowToSwap + 1; index < values.length; index++) {
+                if (values[index][currentRowToSwap] != 0) {
+                    rowSwap(values, currentRowToSwap, index);
+                    rowSwapSuccess = true;
+                    break;
+                }
+            }
+            return rowSwapSuccess;
+        }
+
+        /*
+        * Take the given matrix and get a unit value in the leading diagonal of the matrix.
+        * Multiply the matrix with the value at index position marked by (k,k) where k is the
+        * index position which lies on the leading diagonal plane.
+         */
+        private void makeUnity(double[][] matrixValues, int rowIndex) {
+            double multiplier = 1 / matrixValues[rowIndex][rowIndex];
+            //Match type
+            // first char is a +/- -> \\W?
+            // followed by a digit -> \\d+
+            // followed by a period '.'
+            //followed by a digit 0
+            //the last match is for any 1 or more digits grouped.
+            String printMultiplier = Double.toString(multiplier).matches(DIGIT_MATCH) ? String.format("%d",(int) multiplier) : String.format("%.1f",multiplier);
+            System.out.printf("%s * R%d -> R%d\n", printMultiplier, rowIndex + 1, rowIndex + 1);
+            //step.append(divisor + " * R" + (rowIndex + 1) + " -> R" + (rowIndex + 1) +"\n");
+            for (int column = 0; column < matrixValues[0].length; column++) {
+                if (matrixValues[rowIndex][column] != 0) {
+                    matrixValues[rowIndex][column] *= multiplier;
+                }
+            }
+        }
+
+        /*
+        * Checks if the matrix has a unit value in the index position.  If the unit
+         */
+        private double[][] checkForUnity(double[][] values, int row) {
+            //If the current pivot row is not a 1 then look for row with a 1 in the pivot
+            if (values[row][row] != 1) {
+                for (int rowIndex = row + 1; rowIndex < values.length; rowIndex++) {
+                    if (values[rowIndex][row] != 1.0f) {
+                        continue;
+                    } else {
+                        if (values[rowIndex][0] == 1) {
+                            rowSwap(values, 0, rowIndex);
+                            break;
+                        }
+                    }
+                }
+            }
+            return values;
+        }
+
+        /*
+        * Given a matrix with row and col reduce the given row
+         */
+        private double[][] rowReduce(double[][] matrix, int row, int col) {
+
+            double[] rowN = new double[matrix[0].length];
+            double multiplier = -1 * matrix[row][col];
+            for (int colIndex = 0; colIndex < matrix[0].length; colIndex++) {
+                if (matrix[row][colIndex] == 0) {
+                    rowN[colIndex] = multiplier * matrix[col][colIndex];
+                } else {
+                    rowN[colIndex] += multiplier * matrix[col][colIndex] + matrix[row][colIndex];
+                }
+            }
+            matrix[row] = rowN;
+            String printMultiplier = Double.toString(multiplier).matches(DIGIT_MATCH) ? String.format("%d", (int) multiplier) : String.format("%.1f", multiplier);
+
+            System.out.printf("%s * R%d + R%d -> R%d\n", printMultiplier, col + 1, row + 1, row + 1);
+            //System.out.println(multiplier + " * R" + (col + 1) + " + R" + (row + 1) + " -> " + "R" + (row + 1) + "\n");
+            //step.append(multiplier + " * R" + (col + 1) + " + R" + (row + 1) + " -> " + "R" + (row + 1) + "\n");
+            return matrix;
+        }
+
+        /*
+        * Swap two row in the matrix
+        * @param values is the matrix whose row are to be swapped
+        * @param rowA and rowB are the rows to be swapped around in the matrix
+         */
+        public double[][] rowSwap(double[][] values , int rowA, int rowB) {
+
+            double[] temp = values[rowA];
+            values[rowA] = values[rowB];
+            values[rowB] = temp;
+            System.out.println("R" + (rowA + 1) + " <-> " + "R" + (rowB + 1));
+            return values;
+        }
+
+        /*
+        * Swap the two given columns
+         */
+
+        public double[][] columnSwap(double[][] values, int columnA, int columnB) {
+            Matrix.transpose(values);
+            rowSwap(values, columnA, columnB);
+            System.out.println("C" + (columnA + 1) + " <-> " + "C" + (columnB + 1));
+            return Matrix.transpose(values);
+        }
+
+
+    }
+  learner_created: true
+- name: src/solver/MatrixConverter.java
+  visible: true
+  text: |
+    package solver;
+    /*
+    * 05 July 2020
+    * The aim of this FI is to be able to form a lambda expression to convert an array of type
+    * string values to an array of doubles.
+     */
+    @FunctionalInterface
+    public interface MatrixConverter {
+
+        /*
+        * This method signature is used to convert an array of string to and array of doubles.
+        * The implementing code is provided by the user implementing this Functional Interface.
+        * Use of Lambdas is encouraged.
+         */
+        double[] convertStringArrayToInt(String[] s);
+    }
+  learner_created: true
+- name: src/solver/EquationSolver/Matrix.java
+  visible: true
+  text: |
+    package solver.EquationSolver;
+
+    public interface Matrix {
+
+        //Implement the following method on implementation on the Matrix Interface
+        //The readValues method must read a 2 X 2 matrix and output solution to the
+        //2 X 2 Matrix.  This Interface is used in conjunction with a solver object
+        //to pass the solution back to the calling object.
+        String readValues(double[][] values);
+
+        /*
+        * Take a n x m matrix and transpose it.
+        * @param - a 2 x 2 Matrix with the values to be transposed.
+        * @param - output a 2 X 2 matrix of the transposed Matrix.
+         */
+        static double[][] transpose(double[][] matrix) {
+
+            int rowLength = matrix.length;
+            int colLength = matrix[0].length;
+            double[][] transposedMatrix = new double[colLength][rowLength];
+
+            for (int rowIndex = 0; rowIndex < rowLength; rowIndex++) {
+                for (int colIndex = 0; colIndex < colLength; colIndex++) {
+                    transposedMatrix[colIndex][rowIndex] = matrix[rowIndex][colIndex];
+                }
+            }
+            return transposedMatrix;
+        }
+    }
+  learner_created: true
+- name: src/solver/IO/DataOutputWriter.java
+  visible: true
+  text: |
+    package solver.IO;
+
+    import java.io.BufferedWriter;
+    import java.io.File;
+    import java.io.IOException;
+    import java.io.Writer;
+
+    public class DataOutputWriter extends BufferedWriter {
+
+        enum Message {No_Solutions, Infinitely_many_solutions};
+
+        protected File fileOut;
+        public DataOutputWriter(Writer out) {
+            super(out);
+        }
+
+        public boolean dataWrite(String data) throws IOException {
+
+            if (data.matches("[No solutions|Infinitely many solutions]+")) {
+                this.write(data);
+            } else {
+                String[] s = data.trim().split(" ");
+                for (String element : s) {
+                    if (!element.matches("")) {
+                        this.write(element + "\n");
+                    }
+                }
+            }
+            return true;
+        }
+    }
+  learner_created: true
+- name: src/solver/EquationSolver/LinearEquation.java
+  visible: true
+  text: |
+    package solver.EquationSolver;
+
+    import solver.Solver;
+
+    /*
+    * A Class to pass the linear Equation to the solver.
+     */
+    public class LinearEquation implements Matrix {
+
+        Solver les;
+
+        public LinearEquation(Solver les) {
+            this.les = les;
+        }
+
+        @Override
+        public String readValues(double[][] values) {
+            return les.solution(values);
+        }
+    }
+  learner_created: true
+- name: src/solver/IO/DataInputReader.java
+  visible: true
+  text: |
+    package solver.IO;
+
+    import java.io.*;
+
+    public class DataInputReader extends BufferedReader {
+
+        private String fileIn;
+
+        public DataInputReader(String fileIn) throws FileNotFoundException {
+            super(new FileReader(fileIn));
+            this.fileIn = fileIn;
+        }
+
+        @Override
+        public String toString() {
+            return null;
+        }
+
+    }
+  learner_created: true
+- name: src/solver/Main.java
+  visible: true
+  text: "package solver;\n\nimport solver.EquationSolver.LinearEquation;\nimport solver.EquationSolver.MultiVariableSolver;\n\
+    import solver.IO.DataInputReader;\nimport solver.IO.DataOutputWriter;\n\nimport\
+    \ java.io.File;\nimport java.io.FileNotFoundException;\nimport java.io.FileWriter;\n\
+    import java.io.IOException;\n\npublic class Main {\n\n    public static void main(String[]\
+    \ args) {\n//        Scanner readIn = new Scanner(System.in);\n//        String[]\
+    \ readLine = readIn.nextLine().split(\" \");\n//\n//        //singleVarLE(readLine);\
+    \      //Single variable Linear Equation\n//\n//        String[] readLine2 = readIn.nextLine().split(\"\
+    \ \");\n//\n//        doubleVarLE(readLine, readLine2);\n        //String local\
+    \ = \"D:\\\\My Stuff\\\\Software Projects\\\\JetBrains-HyperSkill\\\\Projects\\\
+    \\Linear Equations Solver\\\\Linear Equations Solver\\\\task\\\\src\\\\solver\\\
+    \\\";\n        String local = \"\";\n        String line = \"\";\n        String\
+    \ result;\n        try(DataInputReader dir = new DataInputReader(local + args[1]))\
+    \ {\n            String[] readFirstLine = dir.readLine().split(\" \");\n     \
+    \       int numberOfVariables = Integer.parseInt(readFirstLine[0]);\n        \
+    \    int numberOfEquations = Integer.parseInt(readFirstLine[1]);\n\n         \
+    \   int rows = numberOfEquations;\n            int columns = numberOfVariables\
+    \ + 1;\n\n            double[][] matrix = new double[rows][columns];\n       \
+    \     int row = 0;\n\n            //Lambda expression for converting string to\
+    \ double matrix\n            MatrixConverter mf = element -> {\n             \
+    \   int count = 0;\n                double[] values = new double[element.length];\n\
+    \                for (String s : element) {\n                    values[count++]\
+    \ = Double.parseDouble(s);\n                }\n                return values;\n\
+    \            };\n\n            while ((line = dir.readLine()) != null) {\n   \
+    \             String[] s = line.split(\" \");\n                matrix[row++] =\
+    \ mf.convertStringArrayToInt(s);\n            }\n\n            //create the solver\
+    \ object\n            LinearEquation les = new LinearEquation(new MultiVariableSolver(matrix,\
+    \ numberOfVariables, numberOfEquations));\n            result = les.readValues(matrix);\n\
+    \n            //Write data to file\n            try(final DataOutputWriter dataOutputWriter\
+    \ = new DataOutputWriter(new FileWriter(new File(local + args[3])))) {\n     \
+    \           boolean writeSuccessful = dataOutputWriter.dataWrite(result);\n  \
+    \              System.out.println(writeSuccessful ? \"Saved to file out.txt\"\
+    \ : \"Write to File Not Successful\");\n\n            }\n\n        }\n       \
+    \ catch (FileNotFoundException fnfXception) {\n            System.out.println(\"\
+    File name/location is incorrect.\");\n        }\n        catch (IOException ioXception)\
+    \ {\n            System.out.println(\"File I/O Error!\");\n        }\n       \
+    \ \n    }\n\n\n    /*\n     * OLD STUFF FROM THE PREVIOUS SOLUTION TO A 2 ARGUMENT\
+    \ LINEAR MATRIX\n     */\n\n//    private static void singleVarLE(String[] readLine)\
+    \ {\n//        System.out.println(Double.parseDouble(readLine[1]) / Double.parseDouble(readLine[0]));\n\
+    //    }\n//\n//\n//    private static void doubleVarLE(String[] readLine, String[]\
+    \ readLine2) {\n//        double a = Double.parseDouble(readLine[0]);\n//    \
+    \    double b = Double.parseDouble(readLine[1]);\n//        double c = Double.parseDouble(readLine[2]);\n\
+    //\n//        double d = Double.parseDouble(readLine2[0]);\n//        double e\
+    \ = Double.parseDouble(readLine2[1]);\n//        double f = Double.parseDouble(readLine2[2]);\n\
+    //\n//        double y = (f - c * d / a) / (e - b * d / a);\n//        double\
+    \ x = (c - b * y) / a;\n//\n//        System.out.println(x + \" \" + y);\n// \
+    \   }\n}\n"
+  learner_created: true
+- name: src/solver/EquationSolver/Solver.java
+  visible: true
+  text: |
+    package solver;
+    /*
+    * The Interface solver acts as a place holder for any implementation used to solve a Linear
+    * Equation.  It allows for a user to write his/her take on solving a Linear Equation
+    * and being able to place a call to the required API pass the Solver Object to the LinearEquation class
+    * to find its solution.
+     */
+    public interface Solver {
+        String solution(double[][] values);
+    }
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/40/stages/213/implement
 status: Unchecked
 record: -1

@@ -1,0 +1,47 @@
+type: code
+files:
+- name: src/Main.java
+  visible: true
+  text: |-
+    interface Movable {
+        int getX();
+        int getY();
+        void setX(int newX);
+        void setY(int newY);
+    }
+
+    interface Storable {
+        int getInventoryLength();
+        String getInventoryItem(int index);
+        void setInventoryItem(int index, String item);
+    }
+
+    interface Command {
+        void execute();
+        void undo();
+    }
+
+    class CommandMove {
+        Movable entity;
+        int xMovement;
+        int yMovement;
+    }
+
+    class CommandPutItem {
+        Storable entity;
+        String item;
+    }
+  learner_created: false
+feedback_link: https://hyperskill.org/learn/step/5160
+status: Failed
+feedback:
+  message: |
+    Failed test #1 of 44. 0 0 27 29
+    Stored 0 →27 29
+    12 15 34 92
+    Stored 1 →34 92
+    [34, 92]
+    Recover 1 x/y → 12/15
+    Bad inventory after undo of put item command1
+  time: Thu, 23 Jul 2020 08:53:15 UTC
+record: -1

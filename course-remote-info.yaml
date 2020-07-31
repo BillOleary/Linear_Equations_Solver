@@ -82,12 +82,8 @@ topics:
     theory_id: 3652
   - title: Introduction to matrices
     theory_id: 7112
-  - title: Type of matrices
+  - title: Types of matrices
     theory_id: 7285
-  - title: Operations with matrices
-    theory_id: 7296
-  - title: Matrix Multiplication
-    theory_id: 7372
   - title: Row operations
     theory_id: 8039
   - title: Row echelon form
