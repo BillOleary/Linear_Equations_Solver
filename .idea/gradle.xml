@@ -13,7 +13,9 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/Linear Equations Solver/task" />
             <option value="$PROJECT_DIR$/Problems/Account Service" />
+            <option value="$PROJECT_DIR$/Problems/Avoid NPE" />
             <option value="$PROJECT_DIR$/Problems/Bank account" />
+            <option value="$PROJECT_DIR$/Problems/Books as strings" />
             <option value="$PROJECT_DIR$/Problems/Check sudoku" />
             <option value="$PROJECT_DIR$/Problems/Cinema" />
             <option value="$PROJECT_DIR$/Problems/Compact strings with AsciiCharSequence" />
@@ -37,6 +39,7 @@
             <option value="$PROJECT_DIR$/Problems/Publication and its subclasses" />
             <option value="$PROJECT_DIR$/Problems/Publications" />
             <option value="$PROJECT_DIR$/Problems/Remote Controller" />
+            <option value="$PROJECT_DIR$/Problems/Return empty string when argument is null" />
             <option value="$PROJECT_DIR$/Problems/Rotate a rectange array" />
             <option value="$PROJECT_DIR$/Problems/Saying animals" />
             <option value="$PROJECT_DIR$/Problems/Shapes area" />
@@ -49,8 +52,10 @@
             <option value="$PROJECT_DIR$/Problems/Symmetric matrix" />
             <option value="$PROJECT_DIR$/Problems/The star figure" />
             <option value="$PROJECT_DIR$/Problems/Time" />
+            <option value="$PROJECT_DIR$/Problems/Time as a string" />
             <option value="$PROJECT_DIR$/Problems/Too many cats" />
             <option value="$PROJECT_DIR$/Problems/Undo command" />
+            <option value="$PROJECT_DIR$/Problems/Users as strings" />
             <option value="$PROJECT_DIR$/util" />
           </set>
         </option>
