@@ -43,3 +43,7 @@ content:
 - Books as strings
 - Return empty string when argument is null
 - Avoid NPE
+- Only true or false
+- Safe converting
+- Pastry packing optimization
+- Boxes are not just objects!

@@ -5,12 +5,12 @@ package solver;
 * string values to an array of doubles.
  */
 @FunctionalInterface
-public interface MatrixConverter {
+public interface MatrixConverter<T extends Number> {
 
     /*
     * This method signature is used to convert an array of string to and array of doubles.
     * The implementing code is provided by the user implementing this Functional Interface.
     * Use of Lambdas is encouraged.
      */
-    double[] convertStringArrayToInt(String[] s);
+    T[] convertStringArrayToInt(String[] s);
 }

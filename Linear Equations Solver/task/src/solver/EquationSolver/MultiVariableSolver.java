@@ -1,6 +1,13 @@
 package solver.EquationSolver;
 
+import solver.EquationSolver.ComplexOrDoubleStrategy.ComplexMultiplier;
+import solver.EquationSolver.ComplexOrDoubleStrategy.DoubleMultiplier;
+import solver.EquationSolver.ComplexOrDoubleStrategy.Multiplier;
+import solver.EquationSolver.ComplexValue.ComplexMaths;
+import solver.EquationSolver.ComplexValue.ComplexNumber;
+
 import java.util.ArrayList;
+import java.util.function.BiFunction;
 
 /*
  * 06 July 2020
@@ -8,13 +15,20 @@ import java.util.ArrayList;
  * Input to the class is a row/col array of numbers from which a solution is to be formed
  * The class implements a Solver Interface with the premise that a solver could be a
  * solution finder for different type of multivariate linear equations.
+ * 14 Aug 2020
+ * Code has been adapted to work with complex Numbers by using Generics.
+ * Type "T extends Number" is designed to hold both Double or Complex Numbers
+ * ComplexNumbers implement Numbers to help them join into the Numbers Family group.
  */
-public class MultiVariableSolver implements Solver {
+//public class MultiVariableSolver{
+public class MultiVariableSolver<T extends Number> implements Solver {
+
 
     //Instance Variables to be updated from external source
-    private final double[][] matrixValues;
+    private T[][] matrixValues = null;
     private final int numberOfVariables;
     private final int numberOfEquations;
+    boolean isComplexValue = false;
 
     //Internal Use Instance Variables
     /**********FOR USE ON PROJECT UPGRADE***************
@@ -22,17 +36,101 @@ public class MultiVariableSolver implements Solver {
     private StringBuilder step = new StringBuilder();
     */
     private final ArrayList<Integer> numberOfSuperfluousEquations = new ArrayList<>();
-    private static final String DIGIT_MATCH = "\\W?\\d+\\.0(\\d+)?";
+    public static final String DIGIT_MATCH = "\\W?[1-9]+\\.0(\\d+)?";   //Used by toString() method for check and print.
     private int numberOfSignificantEquations;
     boolean hasALinearContradiction = false;
+    Multiplier createMultiplier;   //Aggregation inaction.  Multiplier can be a ComplexMultiplier or a DoubleMultiplier.
+
+    //Lambda BiFunctions to present which path to select.
+    //@param Double[][] -> I/P Matrix to the Lambda
+    //@param Integer[] -> Array containing the Row and Column Information passed to the BiFunction
+    //@param Double[][] -> Output resultant matrix after it has been updated by the function.
+    BiFunction<Double[][], Integer[], Double[][]> makeUnityDoubleFunction;
+    BiFunction<ComplexNumber[][], Integer[], ComplexNumber[][]> makeUnityComplexNumberFunction;
+    BiFunction<ComplexNumber[][], Integer[], ComplexNumber[][]> complexNumberRowReduce;
+    BiFunction<Double[][], Integer[], Double[][]> realNumberRowReduce;
+    //
+    T zero;     //Define a zero condition for a Double which is different from a 0 for a Complex Number
+    T one;      //Same as above except for a unit value.
 
 
     //Constructor
-    public MultiVariableSolver(double[][] matrixValues, int numberOfVariables, int numberOfEquations) {
+    public MultiVariableSolver(T[][] matrixValues, int numberOfVariables, int numberOfEquations) {
         this.matrixValues = matrixValues;
         this.numberOfVariables = numberOfVariables;
         this.numberOfEquations = numberOfEquations;
+        init();
+    }
+
+    /*
+    * Used to initialise the the object to a valid state
+     */
+    private void init() {
+        ComplexMaths.COMPLEX_CONSTANT z = ComplexMaths.COMPLEX_CONSTANT.ZERO;
+        ComplexMaths.COMPLEX_CONSTANT o = ComplexMaths.COMPLEX_CONSTANT.ONE;
         this.numberOfSignificantEquations = numberOfEquations;
+        isComplexValue = matrixValues[0][0] instanceof ComplexNumber;
+        createMultiplier = isComplexValue ? new ComplexMultiplier() : new DoubleMultiplier();
+        this.zero = isComplexValue ? (T) z.zero() : (T) Double.valueOf(0);
+        this.one = isComplexValue ? (T) o.one() : (T) Double.valueOf(1);
+
+        //Strategy Pattern Var
+        /*
+         * Lambda for making a Unity Value for Real Number and Complex Number Values
+         */
+        makeUnityDoubleFunction = (e1,rowCol) -> {
+            Integer rowIndex = rowCol[0];
+            Double multiplier = (Double) createMultiplier.multiplierValue(e1, rowCol, Multiplier.SELECT.DIVIDE);
+            for (int column = 0; column < e1[0].length; column++) {
+                if (rowIndex == column) {
+                    e1[rowIndex][column] = 1d;
+                } else {
+                    if (!e1[rowIndex][column].equals(this.zero)) {
+                        e1[rowIndex][column] *= multiplier;
+                    }
+                }
+            }
+            return e1;
+        };
+
+        makeUnityComplexNumberFunction = (e1,rowCol) -> {
+            Integer rowIndex = rowCol[0];
+            ComplexNumber multiplier = (ComplexNumber) createMultiplier.multiplierValue(e1, rowCol,  Multiplier.SELECT.DIVIDE);
+            for (int column = 0; column < e1[0].length; column++) {
+                if (rowIndex == column) {
+                    e1[rowIndex][column] = ComplexNumber.complexNumberOne();
+                } else {
+                    if (!e1[rowIndex][column].equals(this.zero)) {
+                        e1[rowIndex][column] = ComplexMaths.multiply(multiplier, (ComplexNumber) matrixValues[rowIndex][column]);
+                    }
+                }
+            }
+            return e1;
+        };
+
+        complexNumberRowReduce = (e1, rowCol) -> {
+            Integer row = rowCol[0];
+            Integer col = rowCol[1];
+            ComplexNumber multiplier = (ComplexNumber) createMultiplier.multiplierValue(e1, rowCol, Multiplier.SELECT.MULTIPLY);
+            for (int colIndex = 0; colIndex < e1[0].length; colIndex++) {
+                ComplexNumber multiply = ComplexMaths.multiply(multiplier, e1[col][colIndex]);
+                e1[row][colIndex] = ComplexMaths.add(multiply, e1[row][colIndex]);
+            }
+            return e1;
+        };
+
+        realNumberRowReduce = (e1, rowCol) -> {
+            Integer row = rowCol[0];
+            Integer col = rowCol[1];
+
+            Double multiplier = (Double) createMultiplier.multiplierValue(e1, rowCol, Multiplier.SELECT.MULTIPLY);
+
+            for (int colIndex = 0; colIndex < e1[0].length; colIndex++) {
+                e1[row][colIndex] = multiplier * e1[col][colIndex] + e1[row][colIndex];
+            }
+            return e1;
+        };
+
 
     }
 
@@ -43,21 +141,26 @@ public class MultiVariableSolver implements Solver {
     * On each pass it checks for the pivot point of 1 and if found within the matrix, swaps rows and if not found
     * using the row echelon rules to produce a unit pivot point.
     *
+    * 1 Aug 2020
+    * This method has been adapted to function for both Double and Complex Values.
+    * Use of Generics and Strategy Pattern used.
+    *
      */
     @Override
-    public StringBuilder solution(double[][] values) {
-        double[][] matrixValues;
+    public StringBuilder solution() {
         int row;
-        int rowSize = values.length;
+        int rowSize = numberOfEquations;
         int rowIndex;
-        int columnSize = values[0].length;
+        int columnSize = numberOfVariables + 1;
         int columnIndex;
         StringBuilder solution = new StringBuilder();
 
 
+
         System.out.println("Start solving the equation.");
         //If any rows have a 1 in the first row first col promote that to row 1
-        matrixValues = checkForUnity(values , 0);
+        printMatrix();
+        matrixValues = checkForUnity(matrixValues, 0);
 
         int calculationSpan = 2 * columnSize - 1;   //this is twice the length of the matrix
         for (int col = 0; col < calculationSpan; col++) {
@@ -76,8 +179,8 @@ public class MultiVariableSolver implements Solver {
             //Test if the current column exists for the current row
             //Try a row swap to see if we can get a form which is conducive to solving
             //the equation.
-            if (columnIndex < rowSize && matrixValues[columnIndex][columnIndex] == 0) {
-                rowSwap(values, columnIndex);
+            if (columnIndex < rowSize && matrixValues[columnIndex][columnIndex].equals(zero)) {
+                rowSwap(matrixValues, columnIndex);
             }
 
             //pre-calculate the start and end points for the loop
@@ -86,17 +189,23 @@ public class MultiVariableSolver implements Solver {
             for ( ; row < rowSize; row++) {
                 rowIndex = col >= rowSize ? (rowSize - row - 1) % rowSize : row;
                 //System.out.println("\t - Row Index Value " + rowIndex);
-                if (rowIndex == columnIndex && matrixValues[rowIndex][rowIndex] != 0 && matrixValues[rowIndex][rowIndex] != 1) {
+                if (rowIndex == columnIndex &&
+                        !matrixValues[rowIndex][rowIndex].equals(zero) &&
+                        !matrixValues[rowIndex][rowIndex].equals(one)) {
                     makeUnity(matrixValues, rowIndex);
                 } else
-                if (rowIndex != columnIndex && columnIndex < rowSize && matrixValues[rowIndex][columnIndex] != 0) {
+                if (rowIndex != columnIndex &&
+                        columnIndex < rowSize &&
+                        !matrixValues[rowIndex][columnIndex].equals(zero)) {
                     rowReduce(matrixValues, rowIndex, columnIndex);
                 }
             }
+            printMatrix();
+            System.out.println();
         }
 
         //System.out.println(step.toString());
-        double[] results = Matrix.transpose(matrixValues)[columnSize - 1];
+        T[] results = transpose(matrixValues)[columnSize - 1];
         if (numberOfSignificantEquations < numberOfVariables) {
             System.out.println("Infinitely many solutions");
             solution.append("Infinitely many solutions");
@@ -115,7 +224,7 @@ public class MultiVariableSolver implements Solver {
      * A Linear Contradiction is a case where the left hand side is all 0's and the RHS
      * is a none zero number.
      */
-    private boolean rowOfZeros(double[][] values) {
+    private boolean rowOfZeros(T[][] values) {
         boolean rowIsAllZero = true;
         for (int rowCount = 0; rowCount < values.length; rowCount++) {
             rowIsAllZero = true;
@@ -125,12 +234,12 @@ public class MultiVariableSolver implements Solver {
             }
             for (int colCount = 0; colCount < values[0].length - 1;  colCount++) {
                 rowIsAllZero =  rowIsAllZero &&
-                        values[rowCount][colCount] == 0;
+                        values[rowCount][colCount].equals(zero);
             }
             if (rowIsAllZero) {
                 if (!numberOfSuperfluousEquations.contains(rowCount) &&
                         //test the last column is a 0 or not
-                        matrixValues[rowCount][values[0].length - 1] == 0) {
+                        matrixValues[rowCount][values[0].length - 1].equals(zero)) {
                     numberOfSuperfluousEquations.add(rowCount);
                     numberOfSignificantEquations--;
                 }
@@ -145,10 +254,10 @@ public class MultiVariableSolver implements Solver {
     /*
      * The method is used to swap a row with the first available non zero row.
      */
-    private boolean rowSwap(double[][] values, int currentRowToSwap) {
+    private boolean rowSwap(T[][] values, int currentRowToSwap) {
         boolean rowSwapSuccess = false;
         for (int index = currentRowToSwap + 1; index < values.length; index++) {
-            if (values[index][currentRowToSwap] != 0) {
+            if (!values[index][currentRowToSwap].equals(zero)) {
                 rowSwap(values, currentRowToSwap, index);
                 rowSwapSuccess = true;
                 break;
@@ -162,33 +271,31 @@ public class MultiVariableSolver implements Solver {
      * Multiply the matrix with the value at index position marked by (k,k) where k is the
      * index position which lies on the leading diagonal plane.
      */
-    private void makeUnity(double[][] matrixValues, int rowIndex) {
-        double multiplier = 1 / matrixValues[rowIndex][rowIndex];
-        //Match type
-        // first char is a +/- -> \\W?
-        // followed by a digit -> \\d+
-        // followed by a period '.'
-        //followed by a digit 0
-        //the last match is for any 1 or more digits grouped.
-        String printMultiplier =    Double.toString(multiplier).matches(DIGIT_MATCH) ?
-                                    String.format("%d",(int) multiplier) :
-                                    String.format("%.1f",multiplier);
-        System.out.printf("%s * R%d -> R%d\n", printMultiplier, rowIndex + 1, rowIndex + 1);
-        for (int column = 0; column < matrixValues[0].length; column++) {
-            if (matrixValues[rowIndex][column] != 0) {
-                matrixValues[rowIndex][column] *= multiplier;
-            }
+    private T[][] makeUnity(T[][] matrixValues, int rowIndex) {
+        Integer[] rowColumn = {rowIndex, 0};
+        String printMultiplier;
+        if (isComplexValue) {
+            matrixValues = (T[][]) createMultiplier.matrixMultiply(matrixValues, rowColumn, makeUnityComplexNumberFunction);
+        } else {
+            matrixValues = (T[][]) createMultiplier.matrixMultiply(matrixValues, rowColumn, makeUnityDoubleFunction);
         }
+
+        printMultiplier = createMultiplier.toString();
+        System.out.printf("%s * R%d -> R%d\n", printMultiplier, rowIndex + 1, rowIndex + 1);
+        return matrixValues;
     }
 
     /*
-     * Checks if the matrix has a unit value in the index position.  If the unit
+     * Checks if the matrix has a unit value in the index position.
+     * If the pivot value has a 1 in the matrix position.  If we do not have a unit pivot value,
+     * search for any row with a unit value in the specific column.
+     * If none is found, we do not alter the matrix.
      */
-    private double[][] checkForUnity(double[][] values, int row) {
-        //If the current pivot row is not a 1 then look for row with a 1 in the pivot
-        if (values[row][row] != 1) {
+    private T[][] checkForUnity(T[][] values, int row) {
+        //If the current pivot row is not a 1 then look for row with a 1 in the pivot in other rows
+        if (!values[row][row].equals(1d)) {
             for (int rowIndex = row + 1; rowIndex < values.length; rowIndex++) {
-                if (values[rowIndex][0] == 1) {
+                if (values[rowIndex][0].equals(one)) {
                     rowSwap(values, 0, rowIndex);
                     break;
                 }
@@ -200,22 +307,15 @@ public class MultiVariableSolver implements Solver {
     /*
      * Given a matrix with row and col reduce the given row
      */
-    private double[][] rowReduce(double[][] matrix, int row, int col) {
-
-        double[] rowN = new double[matrix[0].length];
-        double multiplier = -1 * matrix[row][col];
-        for (int colIndex = 0; colIndex < matrix[0].length; colIndex++) {
-            if (matrix[row][colIndex] == 0) {
-                rowN[colIndex] = multiplier * matrix[col][colIndex];
-            } else {
-                rowN[colIndex] += multiplier * matrix[col][colIndex] + matrix[row][colIndex];
-            }
+    private T[][] rowReduce(T[][] matrix, int row, int col) {
+        Integer[] rowColumn = {row, col};
+        if (isComplexValue) {
+            matrixValues = (T[][]) createMultiplier.matrixMultiply(matrix, rowColumn, complexNumberRowReduce);
+        } else {
+            matrixValues = (T[][]) createMultiplier.matrixMultiply(matrix, rowColumn, realNumberRowReduce);
         }
-        matrix[row] = rowN;
-        String printMultiplier =    Double.toString(multiplier).matches(DIGIT_MATCH) ?
-                String.format("%d", (int) multiplier) :
-                String.format("%.1f", multiplier);
 
+        String printMultiplier =    createMultiplier.toString();
         System.out.printf("%s * R%d + R%d -> R%d\n", printMultiplier, col + 1, row + 1, row + 1);
         return matrix;
     }
@@ -225,9 +325,9 @@ public class MultiVariableSolver implements Solver {
      * @param values is the matrix whose row are to be swapped
      * @param rowA and rowB are the rows to be swapped around in the matrix
      */
-    public double[][] rowSwap(double[][] values , int rowA, int rowB) {
+    public T[][] rowSwap(T[][] values , int rowA, int rowB) {
 
-        double[] temp = values[rowA];
+        T[] temp = values[rowA];
         values[rowA] = values[rowB];
         values[rowB] = temp;
         System.out.println("R" + (rowA + 1) + " <-> " + "R" + (rowB + 1));
@@ -239,12 +339,45 @@ public class MultiVariableSolver implements Solver {
      */
 
     @Deprecated
-    public double[][] columnSwap(double[][] values, int columnA, int columnB) {
-        Matrix.transpose(values);
+    public T[][] columnSwap(T[][] values, int columnA, int columnB) {
+        transpose(values);
         rowSwap(values, columnA, columnB);
         System.out.println("C" + (columnA + 1) + " <-> " + "C" + (columnB + 1));
-        return Matrix.transpose(values);
+        return transpose(values);
     }
 
+    /*
+     * Take a n x m matrix and transpose it.
+     * @param - a 2 x 2 Matrix with the values to be transposed.
+     * @param - output a 2 X 2 matrix of the transposed Matrix.
+     */
+    public T[][] transpose(T[][] matrix) {
+
+        int rowLength = matrix.length;
+        int colLength = matrix[0].length;
+        T[][] transposedMatrix = isComplexValue ?
+                (T[][]) new ComplexNumber[colLength][rowLength] :
+                (T[][]) new Double[colLength][rowLength];
+
+        for (int rowIndex = 0; rowIndex < rowLength; rowIndex++) {
+            for (int colIndex = 0; colIndex < colLength; colIndex++) {
+                transposedMatrix[colIndex][rowIndex] = matrix[rowIndex][colIndex];
+            }
+        }
+        return transposedMatrix;
+    }
+
+    /*
+    * A method to print out the Matrix - purely for testing and code checking purposes.
+     */
+    private void printMatrix() {
+
+        for (int row = 0; row < matrixValues.length; row++) {
+            for (int col = 0; col < matrixValues[0].length; col++) {
+                System.out.printf("%20s",matrixValues[row][col]);
+            }
+            System.out.println();
+        }
+    }
 
 }

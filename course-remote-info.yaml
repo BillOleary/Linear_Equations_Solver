@@ -58,8 +58,6 @@ topics:
   2:
   - title: Units of information
     theory_id: 6865
-  - title: Computer programming
-    theory_id: 8739
   - title: IDE
     theory_id: 3805
   - title: What is an exception
@@ -184,6 +182,8 @@ topics:
     theory_id: 3493
   - title: Introduction to complex numbers
     theory_id: 9400
+  - title: Complex numbers. Operations
+    theory_id: 9930
   - title: The Object class
     theory_id: 3596
   - title: toString()

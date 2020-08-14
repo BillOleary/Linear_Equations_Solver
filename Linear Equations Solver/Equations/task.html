@@ -1,16 +1,16 @@
 <h2>Description</h2>
 
-<p>In this stage, the problem became much harder. You should generalize the solution for any amount of variables. The important part is to understand that in most cases if the number of equations equals the number of variables there is only one solution. We will consider special cases in the next stage.</p>
+<p>In this stage, the problem becomes more difficult. You should generalize the solution for any amount of variables. The important part is to understand that in most cases if the number of equations equals the number of variables there is only one solution. We will consider special cases in the next stage.</p>
 
-<p>Such multiple linear equations connected together are called system of linear equations.</p>
+<p>Such multiple linear equations connected together are called a <strong>system of linear equations</strong>.</p>
 
-<p>One of the most popular ways to solve them is Gauss-Jordan Elimination. You can see <a target="_blank" href="https://www.youtube.com/watch?v=AhUyh-2aPEc" rel="nofollow noopener noreferrer">here</a> and <a target="_blank" href="https://www.youtube.com/watch?v=2j5Ic2V7wq4" rel="nofollow noopener noreferrer">here</a> detailed explanations of how to do it with 3 variables.</p>
+<p>One of the most popular ways to solve it is Gauss-Jordan Elimination. <a target="_blank" href="https://www.youtube.com/watch?v=AhUyh-2aPEc" rel="nofollow noopener noreferrer">Here</a> and <a target="_blank" href="https://www.youtube.com/watch?v=2j5Ic2V7wq4" rel="nofollow noopener noreferrer">here</a> you can find the detailed explanations of how to do it with 3 variables.</p>
 
-<p>The general system of linear equations looks like in the picture below. The variables are named <span class="math-tex">\(x_1, x_2, ..., x_n\)</span>. The coefficients are named <span class="math-tex">\(a_{i1}, a_{i2}, ... a_{in}\)</span> for the <span class="math-tex">\(i\)</span>-th row. And the constants are named <span class="math-tex">\(b_1, b_2, ... b_n\)</span>.</p>
+<p>You can see an example of the general system of linear equations below. The variables are named <span class="math-tex">\(x_1, x_2, ..., x_n\)</span>. The coefficients are named <span class="math-tex">\(a_{i1}, a_{i2}, ... a_{in}\)</span> for the <span class="math-tex">\(i\)</span>-th row. And the constants are named <span class="math-tex">\(b_1, b_2, ... b_n\)</span>.</p>
 
 <p><span class="math-tex">\(\begin{cases} \begin{aligned} a_{11}x_1 &amp; + a_{12}x_2+... +a_{1n}x_n = b_1 \\ a_{21}x_1 &amp; + a_{22}x_2 +... + a_{2n}x_n = b_2 \\ &amp;... \\ a_{n1}x_1 &amp; + a_{n2}x_2 +... + a_{nn}x_n = b_n \\ \end{aligned} \end{cases}\)</span></p>
 
-<p>Like said in the video, firstly, the algorithm should null the first column of coefficients except for the first coefficient - it should be equal to 1. Notice letters c and d instead of a and b. It means that through some calculations these coefficients became other coefficients and thus we cannot use letters a and b since it would mean the initial coefficients.</p>
+<p>Like in the video, firstly, the algorithm should null the first column of coefficients except for the first coefficient, which should be equal to 1. Notice letters c and d instead of a and b. It means that through some calculations these coefficients became other coefficients and thus we cannot use letters a and b since they refer to the initial coefficients.</p>
 
 <p><span class="math-tex">\(\begin{cases} \begin{aligned} x_1 &amp; + c_{12}x_2+... +c_{1n}x_n = d_1 \\ 0 &amp; + c_{22}x_2 +... + c_{2n}x_n = d_2 \\ 0 &amp; +... \\ 0 &amp; + c_{n2}x_2 +... + c_{nn}x_n = d_n \\ \end{aligned} \end{cases}\)</span></p>
 
@@ -28,15 +28,15 @@
 
 <p>And the right part of the system is the solution to this system.</p>
 
-<p>In this stage, you need to write a program that reads coefficients from a file, solves the system of linear equations and writes the answer to another file. You should pass paths to files using command-line arguments. Write to the file only answers separated by <code class="java">\n</code>. Output all the steps only to the console, not in the file.</p>
+<p>In this stage, you need to write a program that reads coefficients from a file, solves the system of linear equations, and writes the answer to another file. You should pass paths to files using command-line arguments. Write to the file only answers separated by <code class="java">\n</code>. Output all the steps only to the console, not in the file.</p>
 
-<p>The first line of the file should contain the number N - a number of variables being also a number of equations. Every other N lines contain N+1 numbers - N coefficients of the current row and a constant as the last number in this line. The program also should output all rows manipulation it is doing during solving the system of linear equations.</p>
+<p>The first line of the file should contain the number N, a number of variables and also a number of equations. Every other N lines contain N+1 numbers, i.e. N coefficients of the current row and a constant as the last number in this line. The program also should output all rows manipulation it is doing when solving a system of linear equations.</p>
 
-<p>Try to create various classes like <code class="java">Matrix</code>, <code class="java">Row</code>, <code class="java">LinearEquation</code>. With these, the code would be more readable and easier to program.</p>
+<p>Try to create various classes like <code class="java">Matrix</code>, <code class="java">Row</code>, <code class="java">LinearEquation</code> so the code would be more readable and easier to program.</p>
 
 <h2>Example</h2>
 
-<p>Suppose you have a file named <code class="java">in.txt</code>. It contains the following:</p>
+<p>Suppose you have a file named <code class="java">in.txt</code> with the following content:</p>
 
 <pre><code class="language-no-highlight">3
 1 1 2 9
@@ -62,7 +62,7 @@ Start solving the equation.
 The solution is: (1.0, 2.0, 3.0)
 Saved to file out.txt</code></pre>
 
-<p>And the file <code class="java">out.txt</code> should look like this (each answer should be on separate line without any excess symbols). </p>
+<p>And the file <code class="java">out.txt</code> should look like this (each answer should be on a separate line without any excess symbols).</p>
 
 <pre><code class="language-no-highlight">1.0
 2.0

@@ -3,7 +3,7 @@ package solver.EquationSolver;
 /*
 * A Class to pass the linear Equation to the solver.
  */
-public class LinearEquation implements Matrix {
+public class LinearEquation<T extends Number> implements Matrix {
 
     Solver les;
 
@@ -12,7 +12,7 @@ public class LinearEquation implements Matrix {
     }
 
     @Override
-    public StringBuilder readValues(double[][] values) {
-        return les.solution(values);
+    public StringBuilder readValues() {
+        return les.solution();
     }
 }

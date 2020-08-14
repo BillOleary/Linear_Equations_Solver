@@ -1061,6 +1061,41 @@ files:
 
     }
   learner_created: true
+- name: src/solver/EquationSolver/Solver.java
+  visible: true
+  text: |
+    package solver;
+    /*
+    * The Interface solver acts as a place holder for any implementation used to solve a Linear
+    * Equation.  It allows for a user to write his/her take on solving a Linear Equation
+    * and being able to place a call to the required API pass the Solver Object to the LinearEquation class
+    * to find its solution.
+     */
+    public interface Solver {
+        String solution(double[][] values);
+    }
+  learner_created: true
+- name: src/solver/Command.java
+  visible: true
+  learner_created: true
+- name: src/solver/EquationSolver/ComplexValue/ComplexNumber.java
+  visible: true
+  learner_created: true
+- name: src/solver/EquationSolver/ComplexValue/ComplexMaths.java
+  visible: true
+  learner_created: true
+- name: src/solver/EquationSolver/ComplexOrDoubleStrategy/Multiplier.java
+  visible: true
+  learner_created: true
+- name: src/solver/EquationSolver/ComplexOrDoubleStrategy/ComplexMultiplier.java
+  visible: true
+  learner_created: true
+- name: src/solver/EquationSolver/ComplexOrDoubleStrategy/DoubleMultiplier.java
+  visible: true
+  learner_created: true
+- name: src/solver/EquationSolver/ComplexValue/Tester/ComplexNumberUnitTest.java
+  visible: true
+  learner_created: true
 - name: src/solver/Main.java
   visible: true
   text: "package solver;\n\nimport solver.EquationSolver.LinearEquation;\nimport solver.EquationSolver.MultiVariableSolver;\n\
@@ -1110,20 +1145,10 @@ files:
     \ x = (c - b * y) / a;\n//\n//        System.out.println(x + \" \" + y);\n// \
     \   }\n}\n"
   learner_created: true
-- name: src/solver/EquationSolver/Solver.java
-  visible: true
-  text: |
-    package solver;
-    /*
-    * The Interface solver acts as a place holder for any implementation used to solve a Linear
-    * Equation.  It allows for a user to write his/her take on solving a Linear Equation
-    * and being able to place a call to the required API pass the Solver Object to the LinearEquation class
-    * to find its solution.
-     */
-    public interface Solver {
-        String solution(double[][] values);
-    }
-  learner_created: true
 feedback_link: https://hyperskill.org/projects/40/stages/213/implement
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations! Continue on <a href="https://hyperskill.org/projects/40/stages/213/implement">JetBrains
+    Academy</a>
+  time: Fri, 14 Aug 2020 11:18:44 UTC
 record: 4
